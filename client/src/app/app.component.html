@@ -1,0 +1,99 @@
+<header class="topbar">
+  <h1>🎙️ Speech to Text</h1>
+  <span class="tag">Real-time · Hindi + English</span>
+</header>
+
+<main class="layout">
+  <!-- Recorder -->
+  <section class="card recorder">
+    <h2>Live transcription</h2>
+
+    <div class="controls">
+      <label>
+        Engine
+        <select [ngModel]="engine()" (ngModelChange)="engine.set($event)" [disabled]="speech.listening()">
+          <option value="browser">Browser (no key)</option>
+          <option value="gemini">Gemini Live (server)</option>
+        </select>
+      </label>
+      <label>
+        Language
+        <select [ngModel]="language()" (ngModelChange)="language.set($event)" [disabled]="speech.listening()">
+          @for (l of languages; track l.code) {
+            <option [value]="l.code">{{ l.label }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <button class="mic" [class.on]="speech.listening()" (click)="toggle()"
+            [attr.aria-label]="speech.listening() ? 'Stop recording' : 'Start recording'">
+      {{ speech.listening() ? '■ Stop' : '● Start speaking' }}
+    </button>
+
+    @if (engine() === 'browser' && !speech.browserSupported) {
+      <p class="warn">Your browser has no built-in speech recognition. Use Chrome or Edge, or switch to Gemini Live.</p>
+    }
+    @if (speech.error()) { <p class="warn">{{ speech.error() }}</p> }
+
+    <div class="transcript" [class.live]="speech.listening()">
+      @if (liveText()) {
+        <span>{{ speech.finalText() }}</span>
+        <span class="interim"> {{ speech.interimText() }}</span>
+      } @else {
+        <span class="placeholder">Press “Start speaking” and talk — e.g. “Aaj ka meeting 5 baje hai, please join on time.”</span>
+      }
+    </div>
+
+    <div class="actions">
+      <button class="primary" (click)="save()" [disabled]="speech.listening() || !speech.finalText() || saving()">
+        Save to history
+      </button>
+      <button (click)="speech.reset()" [disabled]="speech.listening()">Clear</button>
+    </div>
+  </section>
+
+  <!-- History (CRUD) -->
+  <section class="card history">
+    <div class="history-head">
+      <h2>History <small>({{ total() }})</small></h2>
+      <input type="search" placeholder="Search…" [ngModel]="search()" (ngModelChange)="onSearch($event)" />
+    </div>
+
+    @for (t of items(); track t.id) {
+      <article class="item">
+        @if (editingId() === t.id) {
+          <input class="edit-title" [(ngModel)]="editTitle" maxlength="200" />
+          <textarea rows="3" [(ngModel)]="editText"></textarea>
+          <div class="actions">
+            <button class="primary" (click)="saveEdit(t)">Save</button>
+            <button (click)="editingId.set(null)">Cancel</button>
+          </div>
+        } @else {
+          <div class="item-head">
+            <strong>{{ t.title }}</strong>
+            <span class="meta">{{ t.createdAt | date: 'dd MMM, h:mm a' }} · {{ t.language }} · {{ t.engine }}</span>
+          </div>
+          <p>{{ t.text }}</p>
+          <div class="actions small">
+            <button (click)="copy(t.text)">Copy</button>
+            <button (click)="startEdit(t)">Edit</button>
+            <button class="danger" (click)="remove(t)">Delete</button>
+          </div>
+        }
+      </article>
+    } @empty {
+      <p class="placeholder">No transcriptions yet.</p>
+    }
+
+    @if (pages() > 1) {
+      <nav class="pager">
+        <button (click)="goTo(page() - 1)" [disabled]="page() === 1">‹ Prev</button>
+        <span>Page {{ page() }} of {{ pages() }}</span>
+        <button (click)="goTo(page() + 1)" [disabled]="page() === pages()">Next ›</button>
+      </nav>
+    }
+  </section>
+</main>
+
+@if (message()) { <div class="toast">{{ message() }}</div> }
