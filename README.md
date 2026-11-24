@@ -83,6 +83,10 @@ For frontend development with live reload: `cd client && npx ng serve --proxy-co
 
 ## Deploy (Render, free tier)
 
+**One click:** in Render choose **New → Blueprint**, pick this repository, and Render reads [`render.yaml`](render.yaml) to create the web service and the PostgreSQL database together (leave `GEMINI_API_KEY` empty to use only the browser engine).
+
+**Manual alternative:**
+
 1. Create a free PostgreSQL database on Render (or Neon) and copy its connection string.
 2. New **Web Service** from this GitHub repo:
    - Build command: `cd server && npm install && cd ../client && npm install && npx ng build`

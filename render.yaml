@@ -1,0 +1,26 @@
+# Render Blueprint: one web service (Node serves API + Angular build) and one PostgreSQL database.
+services:
+  - type: web
+    name: speech-to-text
+    runtime: node
+    plan: free
+    buildCommand: cd server && npm ci --omit=dev && cd ../client && npm ci && npx ng build
+    startCommand: cd server && npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: speech-to-text-db
+          property: connectionString
+      - key: DB_SSL
+        value: "false"
+      - key: GEMINI_API_KEY
+        sync: false
+
+databases:
+  - name: speech-to-text-db
+    plan: free
+    databaseName: speech_to_text
+    user: speech
